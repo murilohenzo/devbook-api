@@ -3,6 +3,7 @@ package repositories
 import (
 	"api_resources/src/database"
 	"api_resources/src/models"
+	"errors"
 	"gorm.io/gorm"
 )
 
@@ -10,7 +11,7 @@ type UserRepository struct {
 	Db *gorm.DB
 }
 
-func New() *UserRepository {
+var repository = func() *UserRepository {
 	db := database.InitDb()
 	err := db.AutoMigrate(&models.User{})
 	if err != nil {
@@ -21,7 +22,11 @@ func New() *UserRepository {
 
 //Create user
 func Create(User *models.User) (err error) {
-	err = 	New().Db.Create(User).Error
+	err = repository().Db.Where("email = ?", User.Email).Error
+	if err != nil {
+		return errors.New("Usuario existente")
+	}
+	err = repository().Db.Create(User).Error
 	if err != nil {
 		return err
 	}
